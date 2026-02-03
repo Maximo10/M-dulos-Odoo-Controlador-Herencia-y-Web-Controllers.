@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Plantilla principal del PDF -->
+    <template id="plantilla_pdf_reporte_partido">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+
+                <!-- Estilos CSS -->
+                <style>
+                    h3 {
+                        text-align: center;
+                        font-size: 30px;
+                        color: #0c0c0c;
+                        margin-bottom: 15px;
+                        font-family: Arial, sans-serif;
+                    }
+
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 20px;
+                        font-family: Arial, sans-serif;
+                    }
+
+                    table th, table td {
+                        border: 1px solid #cccccc;
+                        padding: 8px 12px;
+                        text-align: left;
+                    }
+
+                    table th {
+                        background-color: #f2f2f2;
+                        font-weight: bold;
+                    }
+
+                    .section {
+                        margin-top: 20px;
+                    }
+                </style>
+
+                <!-- Header -->
+                <div class="header">
+                    <h1>Informe del Partido</h1>
+                </div>
+
+                <!-- Contenido principal -->
+                <div class="section">
+                    <t t-call="EJ07-LigaFutbol.contenido_partido"/>
+                </div>
+
+            </t>
+        </t>
+    </template>
+
+    <!-- Template de contenido del partido -->
+    <template id="contenido_partido">
+        <t t-if="docs">
+            <t t-set="partido" t-value="docs and docs[0]"/>
+            <table>
+                <tr>
+                    <th>Equipo Local</th>
+                    <td><span t-field="partido.equipo_casa.nombre"/></td>
+                </tr>
+                <tr>
+                    <th>Goles Local</th>
+                    <td><span t-field="partido.goles_casa"/></td>
+                </tr>
+                <tr>
+                    <th>Equipo Visitante</th>
+                    <td><span t-field="partido.equipo_fuera.nombre"/></td>
+                </tr>
+                <tr>
+                    <th>Goles Visitante</th>
+                    <td><span t-field="partido.goles_fuera"/></td>
+                </tr>
+                <tr>
+                    <th>Resultado</th>
+                    <td>
+                        <t t-if="partido.goles_casa &gt; partido.goles_fuera">
+                            Victoria del local
+                        </t>
+                        <t t-elif="partido.goles_casa &lt; partido.goles_fuera">
+                            Victoria del visitante
+                        </t>
+                        <t t-else="">
+                            Empate
+                        </t>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Diferencia de Goles</th>
+                    <td>
+                        <span t-esc="abs(partido.goles_casa - partido.goles_fuera)"/>
+                    </td>
+                </tr>
+            </table>
+        </t>
+        <t t-else="">
+            <p>No hay partidos para mostrar.</p>
+        </t>
+    </template>
+
+    <!-- Acción del reporte PDF -->
+    <record id="action_report_partido_pdf" model="ir.actions.report">
+        <field name="name">Informe del Partido</field>
+        <field name="model">liga.partido</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">EJ07-LigaFutbol.plantilla_pdf_reporte_partido</field>
+        <field name="print_report_name">
+            'Partido - %s vs %s' % (object.equipo_casa.nombre, object.equipo_fuera.nombre)
+        </field>
+    </record>
+
+</odoo>
