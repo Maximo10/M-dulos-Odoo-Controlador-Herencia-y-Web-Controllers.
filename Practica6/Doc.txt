@@ -1,0 +1,541 @@
+Actividad 01 – Modificación del módulo EJ07-LigaFutbol (4 puntos)
+    1. Reglas de puntuación especiales (1 punto)
+            Modifica la lógica de puntuación de partidos:
+            • Los partidos con 4 o más goles de diferencia otorgan:
+                o 4 puntos al ganador.
+                o -1 al perdedor.
+
+        Para poder realiza esto, nos dirigimos al apartado de liga_partido.py.
+        Antes
+
+        def actualizoRegistrosEquipo(self):
+            #Recorremos partidos y equipos
+            for recordEquipo in self.env['liga.equipo'].search([]):
+                #Como recalculamos todo, ponemos de cada equipo todo a cero
+                recordEquipo.victorias=0
+                recordEquipo.empates=0
+                recordEquipo.derrotas=0
+                recordEquipo.goles_a_favor=0
+                recordEquipo.goles_en_contra=0
+
+                # Recorremos todos los partidos
+                for recordPartido in self.env['liga.partido'].search([]):  
+                    #Si es el equipo de casa
+                    if recordPartido.equipo_casa.nombre==recordEquipo.nombre:
+
+                        #Miramos si es victoria o derrota
+                        if recordPartido.goles_casa>recordPartido.goles_fuera:
+                            recordEquipo.victorias=recordEquipo.victorias+1
+                        elif recordPartido.goles_casa<recordPartido.goles_fuera:
+                            recordEquipo.derrotas=recordEquipo.derrotas+1
+                        else:
+                            recordEquipo.empates=recordEquipo.empates+1
+
+                        #Sumamos goles a favor y en contra
+                        recordEquipo.goles_a_favor=recordEquipo.goles_a_favor+recordPartido.goles_casa
+                        recordEquipo.goles_en_contra=recordEquipo.goles_en_contra+recordPartido.goles_fuera
+
+                    #Si es el equipo de fuera
+                    if recordPartido.equipo_fuera.nombre==recordEquipo.nombre:
+
+                        #Miramos si es victoria o derrota
+                        if recordPartido.goles_casa<recordPartido.goles_fuera:
+                            recordEquipo.victorias=recordEquipo.victorias+1
+                        elif recordPartido.goles_casa>recordPartido.goles_fuera:
+                            recordEquipo.derrotas=recordEquipo.derrotas+1
+                        else:
+                            recordEquipo.empates=recordEquipo.empates+1
+
+                        #Sumamos goles a favor y en contra
+                        recordEquipo.goles_a_favor=recordEquipo.goles_a_favor+recordPartido.goles_fuera
+                        recordEquipo.goles_en_contra=recordEquipo.goles_en_contra+recordPartido.goles_casa
+
+        En el, relizaremos los siguintes cambios de logica para cumplir con los requisitos:
+
+        def actualizoRegistrosEquipo(self):
+            #Recorremos partidos y equipos
+            for recordEquipo in self.env['liga.equipo'].search([]):
+                #Como recalculamos todo, ponemos de cada equipo todo a cero
+                recordEquipo.victorias=0
+                recordEquipo.empates=0
+                recordEquipo.derrotas=0
+                recordEquipo.goles_a_favor=0
+                recordEquipo.goles_en_contra=0
+                recordEquipo.puntos=0
+                
+                for recordPartido in self.env['liga.partido'].search([]):  
+                    #Si es el equipo de casa
+                    if recordPartido.equipo_casa.nombre==recordEquipo.nombre:
+                        #Si los goles del equipo de casa es mayor que el visitante
+                        if recordPartido.goles_casa>recordPartido.goles_fuera:
+                            #Añadimos una victoria al equpo de casa
+                            recordEquipo.victorias=recordEquipo.victorias+1
+                            #Si la diferencia de los goles del equipo de casa es >=4
+                            if(recordPartido.goles_casa-recordPartido.goles_fuera)>=4:
+                                #Añadimos 7 puntos al equipo de casa
+                                recordEquipo.puntos=recordEquipo.puntos+7
+                            else:
+                                #Añadimos 3 puntos al equipo de casa
+                                recordEquipo.puntos=recordEquipo.puntos+3
+                        #Si los goles del equipo de casa es menor que el visitante
+                        elif recordPartido.goles_casa<recordPartido.goles_fuera:
+                            #Añadimos una derrota al equipo de casa
+                            recordEquipo.derrotas=recordEquipo.derrotas+1
+                            #Si la diferencia de los goles del equipo visitante es >=4
+                            if(recordPartido.goles_fuera-recordPartido.goles_casa)>=4:
+                                #Añadimos 7 puntos al equipo de casa
+                                recordEquipo.puntos=recordEquipo.puntos-1    
+                                                        
+                        #Si los goloes de ambos equipos son iguales
+                        else:
+                            #Añadimos un empate al equipo de casa
+                            recordEquipo.empates=recordEquipo.empates+1
+                            #Añadimos un punto al equipo de casa
+                            recordEquipo.puntos=recordEquipo.puntos+1
+                            
+                        #Sumamos goles a favor y en contra
+                        recordEquipo.goles_a_favor=recordEquipo.goles_a_favor+recordPartido.goles_casa
+                        recordEquipo.goles_en_contra=recordEquipo.goles_en_contra+recordPartido.goles_fuera
+                    #Si es el equipo de fuera
+                    if recordPartido.equipo_fuera.nombre==recordEquipo.nombre:
+                        #Si los goles del equipo visitante son mayores que el de casa
+                        if recordPartido.goles_casa<recordPartido.goles_fuera:
+                            #Añadimos una victoria al equipo visitante
+                            recordEquipo.victorias=recordEquipo.victorias+1
+                            #Si la diferencia de goles del equipo visitante es >=4
+                            if (recordPartido.goles_fuera-recordPartido.goles_casa)>=4:
+                                #Añadimos 7 puntos al visitante
+                                recordEquipo.puntos=recordEquipo.puntos+7
+                            else:
+                                #Añadimo 3 puntos normales
+                                recordEquipo.puntos=recordEquipo.puntos+3
+                                
+                        #Si los goles del equipo visitante son menores que el de casa
+                        elif recordPartido.goles_casa>recordPartido.goles_fuera:
+                            #Añadimos un derota al equipo visitante
+                            recordEquipo.derrotas=recordEquipo.derrotas+1
+                            #Si la diferencia de goles es mayor a 4
+                            if(recordPartido.goles_casa-recordPartido.goles_fuera)>=4:
+                                recordEquipo.puntos=recordEquipo.puntos-1
+                        else:
+                            recordEquipo.empates=recordEquipo.empates+1
+                            recordEquipo.puntos=recordEquipo.puntos+1
+                        
+                        #Sumamos goles a favor y en contra
+                        recordEquipo.goles_a_favor=recordEquipo.goles_a_favor+recordPartido.goles_fuera
+                        recordEquipo.goles_en_contra=recordEquipo.goles_en_contra+recordPartido.goles_casa
+
+        con la logica completa nos dirigimos a liga_equipo.py donde realizaremos lo siguinte
+        en el apartado de:
+            puntos= fields.Integer( compute="_compute_puntos",default=0, store=True)
+
+            @api.depends('victorias','empates')
+            def _compute_puntos(self):
+                for record in self:
+                    record.puntos = record.victorias * 3 + record.empates
+        el codigo predeterminado se comentara para que no interactue y se sustitura con el siguinte codigo
+            puntos=fields.Integer(default=0)
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    2. Botones para alterar los goles de los partidos (1 punto)
+        En la vista de los partidos:
+            • Botón “+2 goles equipos locales” à suma 2 goles a todos los equipos que juegan en casa.
+            • Botón “+2 goles equipos visitantes” à suma 2 goles a todos los equiposv visitantes.
+        Tras cada acción, la clasificación debe recalcularse.
+
+        En este apartado de la actividad 1 se nos pide se añadamos unos botones cuya funcion sera aumentar
+        los goles del equipo de casa o del visitante. Para ello en el aprtado de liga_partido.py agregaremos la siguientes
+        funciones
+            #Funcion botones para alterar los goles de los partidos
+            def sumar_dos_goles_equipo_casa(self):
+                partidos = self.env['liga.equipo'].search([]):
+                for partido in partidos:
+                    partido.goles_casa = goles_casa+2
+                #Llamada a actualizoRegistrosEquipo
+                self.actualizoRegistrosEquipo()
+
+            def sumar_dos_goles_equipo_fuera(self):
+                partidos = self.env['liga.equipo'].search([]):
+                for partido in partidos:
+                    partido.goles_fuera = goles_fuera+2
+                #Llamada a actualizoRegistrosEquipo
+                self.actualizoRegistrosEquipo()
+
+        tras añadier eso, en liga_partido.xml añadamos lo siguinte en la vista golobal del Kanban y list
+        para ello añadimos a ambas vistas:
+            <header>
+                <button name="sumar_dos_goles_equipo_casa" type="object" string="+2 Goles Equipo Casa" display="always" class="oe_highlight"/>
+                <button name="sumar_dos_goles_equipo_fuera" type="object" string="+2 Goles Equipo Fuera" display="always" class="oe_highlight"/>
+            </header>
+        de forma que el resultado final es:
+            <!-- Vista Tree -->
+            <record id="liga_partido_view_list" model="ir.ui.view">
+        <field name="name">Lista de partidos de la liga</field>
+        <field name="model">liga.partido</field>
+        <field name="arch" type="xml">
+            <list>
+                <!-- Indicamos que atributos usaremos al hacer la vista Tree -->
+                <field name="equipo_casa" />
+                <field name="goles_casa" />
+                <field name="equipo_fuera" />
+                <field name="goles_fuera" />
+
+            </list>
+        </field>
+            </record>
+
+
+            <!-- Vista Kanban -->
+            <record id="liga_partido_view_kanban" model="ir.ui.view">
+        <field name="name">Lista de partidos de la liga</field>
+        <field name="model">liga.partido</field>
+        <field name="arch" type="xml">
+            <!-- Agrupamos por el atributo "parent_id"-->
+            <kanban>           
+                <!-- Indicamos que atributos usaremos al hacer la vista Kanban -->
+
+                <field name="equipo_casa" />
+                <field name="goles_casa" />
+                <field name="equipo_fuera" />
+                <field name="goles_fuera" />
+
+                <!-- Plantilla QWeb para indicar como es la tarjeta Kanban-->
+
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="oe_kanban_card">
+                                    <div class="text-muted">
+                                        <b>
+                                            <p>- Resultado -</p>
+                                        </b>
+                                    </div>
+                                    <div >
+                                        <field name="equipo_casa" /> :
+                                        <field name="goles_casa" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <field name="equipo_fuera" /> :
+                                    <field name="goles_fuera" />
+                                </div>
+                            </div>
+                        
+                        </div>
+                    </t>
+                </templates>
+
+            </kanban>
+        </field>
+            </record>
+
+        a 
+            <!-- Vista Tree -->
+            <record id="liga_partido_view_list" model="ir.ui.view">
+        <field name="name">Lista de partidos de la liga</field>
+        <field name="model">liga.partido</field>
+        <field name="arch" type="xml">
+            <list>
+                <header>
+                    <button name="sumar_dos_goles_equipo_casa" type="object" string="+2 Goles Equipo Casa" display="always" class="oe_highlight"/>
+                    <button name="sumar_dos_goles_equipo_fuera" type="object" string="+2 Goles Equipo Fuera" display="always" class="oe_highlight"/>
+                </header>
+                <!-- Indicamos que atributos usaremos al hacer la vista Tree -->
+                <field name="equipo_casa" />
+                <field name="goles_casa" />
+                <field name="equipo_fuera" />
+                <field name="goles_fuera" />
+
+            </list>
+        </field>
+            </record>
+
+
+            <!-- Vista Kanban -->
+            <record id="liga_partido_view_kanban" model="ir.ui.view">
+        <field name="name">Lista de partidos de la liga</field>
+        <field name="model">liga.partido</field>
+        <field name="arch" type="xml">
+            <!-- Agrupamos por el atributo "parent_id"-->
+            <kanban>
+                <header>
+                    <button name="sumar_dos_goles_equipo_casa" type="object" string="+2 Goles Equipo Casa" display="always" class="oe_highlight"/>
+                    <button name="sumar_dos_goles_equipo_fuera" type="object" string="+2 Goles Equipo Fuera" display="always" class="oe_highlight"/>
+                </header>            
+                <!-- Indicamos que atributos usaremos al hacer la vista Kanban -->
+
+                <field name="equipo_casa" />
+                <field name="goles_casa" />
+                <field name="equipo_fuera" />
+                <field name="goles_fuera" />
+
+                <!-- Plantilla QWeb para indicar como es la tarjeta Kanban-->
+
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="oe_kanban_card">
+                                    <div class="text-muted">
+                                        <b>
+                                            <p>- Resultado -</p>
+                                        </b>
+                                    </div>
+                                    <div >
+                                        <field name="equipo_casa" /> :
+                                        <field name="goles_casa" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <field name="equipo_fuera" /> :
+                                    <field name="goles_fuera" />
+                                </div>
+                            </div>
+                        
+                        </div>
+                    </t>
+                </templates>
+
+            </kanban>
+        </field>
+            </record>
+        con ese ajuste podemos finaliza el apartado.
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    3. Web controller para eliminar empates (0,5 puntos)
+        Crear un Web Controller accesible en:
+        http://localhost:8069/eliminarempates
+        Que:
+        • Elimine todos los partidos que hayan terminado en empate.
+        • Devuelva el número de partidos eliminados.
+
+        #Se puede probar accediendo a http://localhost:9001/ligafutbol/eliminarempates
+        @http.route('/ligafutbol/eliminarempates', type='http', auth='none')
+        def funcion_eliminar_empates(self):
+            try:
+                # Buscamos todos los partidos
+                lista_partidos = request.env['liga.partido'].sudo().search([])
+
+                #Lista de los partidos empatados
+                lista_partidos_empatados=[]
+
+                # Filtramos los partidos que terminaron en empate
+                for partido in lista_partidos:
+
+                    if partido.goles_casa == partido.goles_fuera:
+                        lista_partidos_empatados.append(partido)
+
+                    # Contamos los partidos empatados
+                    num_partidos_empatados=len(lista_partidos_empatados)
+
+                #Comprobamos si existe algun partido empatado
+                if num_partidos_empatados>0:
+
+                    for partido_empatado in lista_partidos_empatados:
+                        # Eliminamos los partidos empatados
+                        partido_empatado.unlink()
+
+                    mensaje=json.dumps({'mensaje': f'Se eliminaron {num_partidos_empatados} partidos empatado'})
+                else:
+                    mensaje=json.dumps({'mensaje': f'No existen partidos empatado para eliminar'})
+
+                # Retornamos JSON con la cantidad eliminada
+                return mensaje
+
+            except Exception as e:
+                        return json.dumps({"error": str(e)})
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    4. Informe PDF por cada partido (0,5 puntos)
+        Generar un informe PDF que muestre:
+        • Datos del partido.
+        • Resultado.
+        • Equipos enfrentados, etc.
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    5. Wizard para crear nuevos partidos (0,5 puntos)
+        Crear un wizard que permita introducir:
+        • Equipo local.
+        • Equipo visitante.
+        • Goles.
+        • Jornada.
+        Y genere un nuevo registro en el modelo.
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    6. Vista Graph (0,5 puntos)
+        En la vista de partidos implementar una vista gráfica que muestre estadísticas
+        de:
+        • Goles marcados por los equipos locales.
+            <record id='liga_partido_action' model='ir.actions.act_window'>
+                <field name="name">Partidos de la liga</field>
+                <!-- Indicamos vistas para este modelo (categoria) -->
+                <field name="res_model">liga.partido</field>
+                <!-- Indicamos que este modelo se puede ver en kanban, tree y form -->
+                <field name="view_mode">kanban,list,form,graph</field>
+            </record>
+            <!-- Vista Graph -->
+            <record id="liga_partido_view_graph" model="ir.ui.view">
+                <field name="name">Gráfico goles locales</field>
+                <field name="model">liga.partido</field>
+                <field name="arch" type="xml">
+                    <graph string="Goles Equipo Local" type="bar">
+                        <!-- Agrupamos por equipo de casa -->
+                        <field name="goles_casa" type="measure"/>
+                        <field name="equipo_casa" type="row"/>
+                    </graph>
+                </field>
+            </record>
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Actividad 02 – Pruebas del API REST “EJ08-API-REST_Socios” (1,5 puntos)
+    Realiza un vídeo (máx. 3 min) donde:
+
+    • Pruebes las operaciones crear, modificar, consultar y eliminar de API
+    REST.
+    • Utilices una herramienta como:
+    o Postman.
+    o Thunder Client (VSCode).
+    • Explica brevemente que haces en cada prueba.
+
+    El vídeo lo puedes grabar en español o en inglés.  
+
+    Los socios que crearemos:
+    1 Juan Pérez García
+    2 María López Fernández
+    3 Carlos Ramírez Sánchez
+    4 Laura Gómez Díaz
+    {
+      "num_socio":1,
+      "nombre":"Juan",
+      "apellidos":"Pérez García"
+    },
+    {
+      "num_socio":2,
+      "nombre":"María",
+      "apellidos":"López Fernández"
+    },
+    {
+      "num_socio":3,
+      "nombre":"Carlos",
+      "apellidos":"Ramírez Sánchez"
+    },
+    {
+      "num_socio":4,
+      "nombre":"Laura",
+      "apellidos":"Gómez Díaz"
+    }
+    En esta actividad nos dispondremos a crear 
+
+    POST -> Crear
+    http://localhost:9001/gestion/apirest/socio?data={"num_socio":1,"nombre":"Carlos","apellidos":"García"}
+    http://localhost:9001/gestion/apirest/socio?data={"num_socio":2,"nombre":"Ana","apellidos":"Martínez"}
+
+    GET -> Obtener
+    http://localhost:9001/gestion/socio
+
+    PUT -> Modificar 
+    http://localhost:9001/gestion/apirest/socio?data={"num_socio":1,"nombre":"Gonzalo","apellidos":"Fdez Fdez"}
+
+    DELETE -> Eliminar 
+    http://localhost:9001/gestion/apirest/socio?data={"num_socio":4}
+
+
+    Buenos días Teresa, en este video, vamos a trabajar con Odoo y su API REST, y aprenderemos a manejar datos de socios de manera práctica. 
+
+    Vamos a realizar las operaciones básicas: crear, consultar, modificar y eliminar registros.
+
+    Primero, comenzamos instalando el módulo de socios. 
+
+    Una vez instalado, revisamos el módulo para confirmar que no hay registros todavía, de manera que partimos de un sistema limpio. 
+
+    Esto nos ayudará a ver claramente los cambios que realizamos a continuación.
+
+    A continuación, abrimos Thunder Clainet en Visual Estudio, que es la herramienta que utilizaremos para interactuar con la API REST.
+
+    El primer paso será crear cuatro socios. 
+
+    Lo haremos utilizando dos métodos distintos: algunos los agregaremos directamente a través de la paticion POST, y otros ingresando los datos en el cuerpo de la petición.
+
+    Una vez que los cuatro socios estén creados, hacemos una verificación. 
+
+    Esto consiste en realizar una petición GET que obtiene todos los socios existentes en el sistema. 
+
+    Así podremos confirmar que la creación fue exitosa y que los registros están completos.
+
+    El siguiente paso es modificar uno de los socios. 
+
+    Cambiaremos su nombre y apellido mediante una operación PUT. 
+
+    Después de realizar la modificación, consultamos nuevamente la lista de socios para verificar que los cambios se aplicaron correctamente.
+
+    Finalmente, vamos a eliminar uno de los socios. 
+
+    Esto se realiza mediante una operación DELETE. 
+
+    Tras la eliminación, realizamos una última consulta para comprobar que el registro ha sido efectivamente removido del sistema.
+
+    Con estos pasos, hemos cubierto todas las operaciones principales que se pueden realizar con la API REST de socios en Odoo. 
+
+    Crear, consultar, modificar y eliminar son acciones fundamentales para manejar datos de manera eficiente.
+
+    Y con esto, concluimos la práctica de hoy.
+
+
+Actividad 04 – Generación de imágenes aleatorias con Web Controller (1,5 puntos)
+    Crear con Odoo un Web Controller que:
+    1. Reciba como parámetros (ancho de la imagen y alto de la imagen).
+    2. Utilice la librería Pillow (PIL).
+    3. Genere una imagen compuesta por píxeles aleatorios.
+    4. Devuelva la imagen codificada en Base64 o directamente como binario PNG.
+    Puedes basarte en:
+    • El ejemplo “EJ09-GenerarBarcode”
+    • Código de generación de imágenes con PIL.
+    
+    Para realizar esta actividad los primero que realizaremos es instalar el modelo y activarlo.
+    Una vez activado, nos diriguimos a la terminal donde ingresaremos al administrador
+
+
+esto es lo que tengo :# Importamos las librerías necesarias
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+import requests
+import json
+from dotenv import load_dotenv
+import os
+
+# Cargamos load_dotenv para leer las variables de entorno desde el archivo .env
+load_dotenv()
+
+# Variable para obtener la URL de la API REST
+URL_API_REST=os.getenv("URL_API_REST")
+# Variable para obtener el token del bot de Telegram
+Token=os.getenv("TOKEN_BOT_TELEGRAM")
+# Variable para obtener la URL de la vista de socios 
+URL_VISTA_SOCIOS=os.getenv("URL_VISTA_SOCIOS")
+
+# Función manejo ordenes bot de Telegram
+async def comnandos_bot_telegram(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Varable para guardar mensajes recibidos del usuario
+    mensaje_recibido = update.message.text
+    
+    # Controlador de comandos y errores
+    try:
+        # Varible para separar los datos recibidos
+        datos_mensaje= mensaje_recibido.split(":")
+        # Variable para guardar el comando recibido
+        comando=datos_mensaje[0].lower()
+        # Lista para guardar los datos recibidos
+        datos_socio=[]
+        
+        # Bucle para recorrer los datos del mensaje recibido
+        for apartados in datos_mensaje[1:]:
+            # Variable para separar el comando y el dato recibido
+            comando_recibido, dato_recibido= apartados.split("=")
+            # Añadimos el dato recibido a la lista de datos del socio
+            datos_socio.append(dato_recibido.strip())
+    
+    except Exception as e:
+        await update.message.reply_text("Error en el formato del mensaje. Por favor, use el formato correcto.")
+        
