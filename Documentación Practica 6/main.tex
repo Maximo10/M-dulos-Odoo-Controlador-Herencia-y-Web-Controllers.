@@ -1,0 +1,740 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\usepackage{graphicx}      % Imágenes
+\usepackage{float}         % Control de posicionamiento
+\usepackage{subcaption}   
+\usepackage{wrapfig}       % Imágenes con texto alrededor
+\usepackage{tcolorbox}     % Cajas para código
+\usepackage{url}           % URLs
+\usepackage{hyperref}      % Enlaces clicables
+\hypersetup{
+colorlinks=true,
+linkcolor=black,
+urlcolor=blue,
+citecolor=black
+}
+
+\tcbset{
+colback=gray!10,
+colframe=black,
+boxrule=0.8pt,
+arc=4pt,
+left=6pt,
+right=6pt,
+top=6pt,
+bottom=6pt
+}
+
+
+\newcommand{\volverindice}{
+\vspace{0.3cm}
+\begin{flushright}
+\small\hyperlink{indice}{\textit{Volver al índice}}
+\end{flushright}
+}
+
+\title{Your Paper}
+\author{Birhan Fdez}
+
+\begin{document}
+\maketitle
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{img/odoo_logo.png}
+\label{fig:repo-colify}
+\end{figure}
+
+\newpage
+\hypertarget{indice}{}
+\tableofcontents
+
+\newpage
+\volverindice
+\section{Objetivo}
+El objetivo de este documento es la demostración del manejo sobre las vistas, wizards, informes y controladores web ademas de mostrar una prueba API REST mediante herramientas externas.
+
+\section{Actividad 01}
+
+En esta actividad se ha trabajado sobre el módulo base \textit{EJ07-LigaFutbol}, realizando modificaciones tanto en los modelos como en las vistas, con el objetivo de ampliar la lógica de la liga y añadir nuevas funcionalidades solicitadas en el enunciado.
+
+\subsection{Reglas de puntuación especiales}
+
+En este apartado, se nos pide modificar el sistema de puntuación de los equipos para contemplar una regla especial. Esta regla no dice que cuando un equipo gana un partido con una diferencia de \textbf{4 o más goles}, además de los \textbf{3 puntos habituales por victoria}, obtiene \textbf{4 puntos adicionales}.  
+Asimismo, el equipo perdedor en este tipo de partidos pierde \textbf{1 punto}.
+
+Para implementar esta regla, nos dirigimos al apartado \textbf{liga\_partido.py} del archivo
+\textbf{Models}.
+Una vez en el apartado, modificaremos la función \textbf{actualizoRegistrosEquipo} añadiendo los siguientes datos en las variables de los equipos para que obtengamos lo siguiente:
+
+\begin{tcolorbox}[title=Viejas Variables De los Equipos ]
+    recordEquipo.victorias = 0 \\
+    recordEquipo.empates = 0 \\
+    recordEquipo.derrotas = 0 \\
+    recordEquipo.goles\_a\_favor = 0 \\
+    recordEquipo.goles\_en\_contra = 0
+\end{tcolorbox}
+
+\begin{tcolorbox}[title=Nuevas Variables De los Equipos con los Puntos ]
+    recordEquipo.victorias = 0 \\
+    recordEquipo.empates = 0 \\
+    recordEquipo.derrotas = 0 \\
+    recordEquipo.goles\_a\_favor = 0 \\
+    recordEquipo.goles\_en\_contra = 0 \\
+    recordEquipo.puntos = 0    
+\end{tcolorbox}
+
+\volverindice
+\newpage
+Con las variables modificadas, en el apartado de la lógica encargada de gestionar las victorias, empates y derrotas, añadiremos la lógica que se encargara de gestionar los puntos. Esto se realiza añadiendo el siguiente código:
+
+\begin{tcolorbox}[title=Nuevas Lógica de Puntos para Equipo Local]
+\begin{verbatim}
+for recordPartido in self.env['liga.partido'].search([]):
+    if recordPartido.equipo_casa.nombre==recordEquipo.nombre:
+        if recordPartido.goles_casa>recordPartido.goles_fuera:
+            recordEquipo.victorias=recordEquipo.victorias+1
+            if(recordPartido.goles_casa-recordPartido.goles_fuera)>=4:
+                recordEquipo.puntos=recordEquipo.puntos+7
+            else:
+                recordEquipo.puntos=recordEquipo.puntos+3
+        elif recordPartido.goles_casa<recordPartido.goles_fuera:
+            recordEquipo.derrotas=recordEquipo.derrotas+1
+            if(recordPartido.goles_fuera-recordPartido.goles_casa)>=4:
+                recordEquipo.puntos=recordEquipo.puntos-1
+        else:
+            recordEquipo.empates=recordEquipo.empates+1
+            #Añadimos un punto al equipo de casa
+            recordEquipo.puntos=recordEquipo.puntos+1
+\end{verbatim}
+\end{tcolorbox}
+
+\begin{tcolorbox}[title=Nuevas Lógica de Puntos para Equipo Visitante]
+\begin{verbatim}
+    if recordPartido.equipo_fuera.nombre==recordEquipo.nombre:
+        if recordPartido.goles_casa<recordPartido.goles_fuera:
+            recordEquipo.victorias=recordEquipo.victorias+1
+            if (recordPartido.goles_fuera-recordPartido.goles_casa)>=4:
+                recordEquipo.puntos=recordEquipo.puntos+7
+            else:
+                recordEquipo.puntos=recordEquipo.puntos+3
+        elif recordPartido.goles_casa>recordPartido.goles_fuera:
+            recordEquipo.derrotas=recordEquipo.derrotas+1
+            if(recordPartido.goles_casa-recordPartido.goles_fuera)>=4:
+                recordEquipo.puntos=recordEquipo.puntos-1
+        else:
+            recordEquipo.empates=recordEquipo.empates+1
+            recordEquipo.puntos=recordEquipo.puntos+1
+\end{verbatim}
+\end{tcolorbox}
+
+\volverindice
+\begin{center}
+\includegraphics[width=0.8\textwidth]{img/od10.png}
+\end{center}
+
+Con este nuevo código añadido, nos iremos al apartado \textbf{liga\_equipo.py} para realizar un cambio en el atributo de los equipos. Esta modificación se hace eliminando la vieja lógica y solo declarando el atributo puntos.
+
+\begin{tcolorbox}[title=Vieja Lógica de Puntos]
+\begin{verbatim}
+puntos= fields.Integer( compute="_compute_puntos",default=0, store=True)
+    
+@api.depends('victorias','empates')
+def _compute_puntos(self):
+    for record in self:
+        record.puntos = record.victorias * 3 + record.empates
+\end{verbatim}
+\end{tcolorbox}
+
+\begin{tcolorbox}[title=Nuevo Atributo de Puntos]
+\begin{verbatim}
+    puntos= fields.Integer(default=0)
+\end{verbatim}
+\end{tcolorbox}
+
+\volverindice
+\newpage
+Esto nos tiene que quedar de la siguiente forma:
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/od11.png}
+\end{center}
+
+Con la nueva lógica implementada, nos dirigiremos al módulo de \textbf{Odoo} donde crearemos dos equipos que se enfrentaran para comprobar su correcto funcionamiento.
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/od5.png}
+\end{center}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/od12.png}
+\end{center}
+
+Una vez comprobado su correcto funcionamiento, podremos avanzar al siguiente apartado.
+
+\newpage
+
+\volverindice
+\subsection{Botones para modificar los goles de los partidos}       
+Esta sección de la activada, nos pide que realicemos una actualización en la vistas \textbf{Kanban y Lista} del modelo \textbf{liga.partido}
+
+La actualización consiste en añadir dos botones que permitan modificar de forma general los goles registrados en cada uno de los partidos que exista.
+Cada botón contara con la función \textbf{de sumar 2 goles al equipo local o al equipo visitante}.\\
+
+Para poder realizar esta actualización, nos dirigiremos al  \textbf{liga\_partido.py}.
+Una vez entremos, nos dirigiremos al final del código para agregar las siguientes dos funciones que manejaran a cada uno de los botones:
+
+\begin{tcolorbox}[title=Lógica del Botón Para Sumar Goles al Equipo Local]
+\begin{verbatim}
+def sumar_dos_goles_equipo_casa(self):
+    partidos = self.search([])
+    for partido_local in partidos:
+        partido_local.goles_casa = partido_local.goles_casa+2
+    #Llamada a actualizoRegistrosEquipo
+    self.actualizoRegistrosEquipo()
+\end{verbatim}
+\end{tcolorbox}
+
+\begin{tcolorbox}[title=Lógica del Botón Para Sumar Goles al Equipo Visitante]
+\begin{verbatim}
+def sumar_dos_goles_equipo_fuera(self):
+    partidos = self.search([])
+    for partido_visitante in partidos:
+        partido_visitante.goles_fuera = partido_visitante.goles_fuera+2
+    #Llamada a actualizoRegistrosEquipo
+    self.actualizoRegistrosEquipo()
+\end{verbatim}
+\end{tcolorbox}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/od151.png}
+\end{center}
+
+\newpage
+\volverindice
+Tras añadir esta dos nuevas funciones, nos dirigiremos al apartado de \textbf{liga\_partido.xml} en la carpeta de vistas del modulo.
+Dentro de la vista, se añadirá el siguiente código a las vistas de \textbf{Kanban y Lista}:
+
+\begin{tcolorbox}[title=Lógica del Botón Para Sumar Goles al Equipo Visitante]
+\begin{verbatim}
+<!-- Botones para sumar goles -->            
+<header>
+    <!-- Botones para sumar goles al equipo local --> 
+    <button name="sumar_dos_goles_equipo_casa" type="object" string="+2 Goles Equipo Casa"  display="always" class="oe_highlight"/>
+    <!-- Botones para sumar goles al equipo visitante --> 
+    <button name="sumar_dos_goles_equipo_fuera" type="object" string="+2 Goles Equipo Fuera" display="always" class="oe_highlight"/>
+</header>
+\end{verbatim}
+\end{tcolorbox}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/od16.png}
+\end{center}
+
+Con las modificaciones a las vistas realizadas, nos dirigiremos a modulo desde \textbf{Odoo} para actualizarlo y comprobar su correcto funcionamiento.\\
+Primero realizaremos una prueba desde la vista \textbf{Kanban}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/od17.png}
+\end{center}
+
+\newpage
+\volverindice
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/od19.png}
+\end{center}
+
+Para terminar, comprobaremos la vista \textbf{Lista}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/od18.png}
+\end{center}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/lista.png}
+\end{center}
+
+Con la confirmación del correcto funcionamiento de los botones en ambas vistas, daremos completada esta apartado.
+
+\subsection{Web controller para eliminar empates}
+Continuando con los ejercicios de la \textbf{Actividad 1}, en esta sección se nos pide que realicemos la creación de un \textbf{Web Controller} cuyo trabajo \textbf{sera eliminar los partido que estén empatado} para luego devolver un mensaje indicando el número que se eliminó.\\
+
+Para comenzar a trabajar, ingresaremos al archivo \textbf{Manin.py} de la carpeta \textbf{controller} del modulo.
+Una vez que ingresemos, dentro de la clase \textbf{class Main(http.Controller):} crearemos el siguiente código:
+
+\newpage
+\volverindice
+{\small
+\begin{tcolorbox}[title=Código de la Función del Web controller ]
+\begin{verbatim}
+#URL del Web controller http://localhost:9001/ligafutbol/eliminarempates
+@http.route('/ligafutbol/eliminarempates', type='http', auth='none')
+def funcion_eliminar_empates(self):
+    try:
+        # Buscamos todos los partidos
+        lista_partidos = request.env['liga.partido'].sudo().search([])
+        #Lista de los partidos empatados
+        lista_partidos_empatados=[]
+        
+        # Filtramos los partidos que terminaron en empate
+        for partido in lista_partidos:
+            if partido.goles_casa == partido.goles_fuera:
+                lista_partidos_empatados.append(partido)                
+            # Contamos los partidos empatados
+            num_partidos_empatados=len(lista_partidos_empatados)
+        
+        #Comprobamos si existe algun partido empatado
+        if num_partidos_empatados>0:
+            for partido_empatado in lista_partidos_empatados:
+                # Eliminamos los partidos empatados
+                partido_empatado.unlink()
+            mensaje=json.dumps({
+        'mensaje': f'Se eliminaron {num_partidos_empatados} partidos empatado'
+            })
+        else:
+            mensaje=json.dumps({
+                'mensaje': f'No existen partidos empatado para eliminar'
+            })
+        # Retornamos JSON con la cantidad eliminada
+        return mensaje
+    except Exception as e:
+                return json.dumps({"error": str(e)})
+\end{verbatim}
+\end{tcolorbox}
+}
+
+\newpage
+\volverindice
+De tal forma que nos deberá de quedar así en nuestro archivo:
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/od24.png}
+\end{center}
+
+Con el código implementado, realizaremos una prueba para comprobar su correcto funcionamiento.\\
+Lo primero que haremos, es crear dos partido cuyo resultado sera un empate:
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/od26.png}
+\end{center}
+
+Una vez creados, accederemos a la url para borrar los nuevos partidos creados.\\
+\url{http://localhost:9001/ligafutbol/eliminarempates}
+
+\newpage
+\volverindice
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/od25.png}
+\end{center}
+
+Como se puede observar en la imagen, el \textbf{Web Controller} elimino los dos partidos empatados y nos informo con un mensaje.
+Para confirmar del todo la eliminación de los partidos, regresaremos a la vista y comprobaremos que no estén.
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/webcon.png}
+\end{center}
+
+Al ingresar, observamos que la eliminación ha sido un éxito, confirmando el correcto funcionamiento y dando por finalizado el ejercicio.
+
+\subsection{Informe PDF por partido}
+Para realizar este ejercicio que nos pide crear \textbf{un informe PDF de cada partido}, tendremos que crear un \textbf{Report}.\\
+
+Para ello, nos dirigimos a \textbf{Models/Reports}.Dentro de esta carpeta, crearemos un nuevo archivo que se llamará \textbf{pdf\_reporte\_partido.xml}\\
+
+\begin{center}
+\includegraphics[width=0.6\textwidth]{img/od31.png}
+\end{center}
+
+Una vez creado el archivo, antes de comenzar, nos dirigiremos al apartado de \textbf{'data'} en el archivo \textbf{\_\_manifest\_\_.py}.Dentro, añadiremos el archivo para que el modulo pueda reconocerlo:
+
+\begin{center}
+\includegraphics[width=1\textwidth]{img/pdf.png}
+\end{center}
+
+\newpage
+\volverindice
+Con la localización del archivo añadido, lo siguiente que realizaremos en implementar la función del reporte.
+Los primero que realizaremos es diseñar la apariencia que tendrá la plantilla:
+
+\begin{center}
+\includegraphics[width=0.7\textwidth]{img/od32.png}
+\end{center}
+
+\newpage
+\volverindice
+Esto seguido de los datos que contendrá:
+
+\begin{center}
+\includegraphics[width=0.7\textwidth]{img/od33.png}
+\end{center}
+
+Por ultimo, añadiremos la acción del reporte:
+
+\begin{center}
+\includegraphics[width=0.7\textwidth]{img/od34.png}
+\end{center}
+
+\newpage
+\volverindice
+Con el archivo, finalizado, nos dirigiremos al archivo de vista \textbf{liga\_partido.xml} para añadir el botón de descarga del PDF en la cabecera del partido deseado desde la vista de \textbf{Formulario}:
+
+\begin{tcolorbox}[title=Botón Informe PDF ]
+\begin{verbatim}
+<header>
+    <!-- Boton para descargar el reporte del partido-->
+    <button
+        name="%(EJ07-LigaFutbol.action_report_partido_pdf)d"
+        string="Imprimir Informe"
+        type="action"
+        class="btn-primary"/>
+</header>        
+\end{verbatim}
+\end{tcolorbox}
+
+\begin{center}
+\includegraphics[width=0.7\textwidth]{img/od35.png}
+\end{center}
+
+Por último nos dirigiremos a los partidos, para crear un partido nuevo y comprobar su correcto funcionamiento.
+
+\newpage
+\volverindice
+
+\begin{center}
+\includegraphics[width=0.7\textwidth]{img/od36.png}
+\end{center}
+Como se puede observar en la imagen, la creación fue un éxito.\\
+Para dar por concluido con el generador de informes, realizaremos una impresión:
+
+\begin{center}
+\includegraphics[width=0.7\textwidth]{img/od37.png}
+\end{center}
+Siendo el resultado:
+
+\begin{center}
+\includegraphics[width=1\textwidth]{img/pdf-con.png}
+\end{center}
+
+\newpage
+\volverindice
+\subsection{Wizard para nuevos partidos}
+En este apartado, desarrollaremos un Wizard que permitirá al usuario crear nuevos partidos de forma mas rápida y sencilla, ya que se podrá ingresar toada la información con una sola ventana emergente.\\
+Lo primero que realizaremos es crear un par de archivos nuevos que contendrán la función y vista de esta nueva verata emergente.\\
+Estos los crearemos dentro de la carpeta \textbf{Wizard}
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{img/act15_1.png}
+\end{center}
+
+Con los archivos creados, añadiremos la la ruta del archivo de vista del \textbf{Wizard} en el apratado de \textbf{'Data'} deñ archivo \textbf{\_\_manifest\_\_.py}.
+
+\begin{center}
+\includegraphics[width=0.7\textwidth]{img/act15_5.png}
+\end{center}
+
+Con la ruta del archivo asignada, realizaremos una modificación final en el archivo \textbf{\_\_init\_\_.py} donde añadiremos el modelo.
+
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act15_4.png}
+\end{center}
+
+\newpage
+\volverindice
+Con los pasos previos finalizado, nos dirigimos al archivo \textbf{liga\_partido\_wizard.py} para codifiar lo siguiente:
+
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act15_2.png}
+\end{center}
+
+Una vez finalicemos con la función, en el archivo \textbf{liga\_partido\_wizard.xml} ingresaremos el siguinte código
+
+\newpage
+\volverindice
+
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act15_3.png}
+\end{center}
+
+Finalmente,  nos dirigimos al archivo de \textbf{liga\_partido.py} para crear un nuevo campo encargado de gestionar las jornadas de los partidos.
+
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act15_6.png}
+\end{center}
+
+\newpage
+\volverindice
+
+Con el nuevo campo agregado, nos dirigimos al archivo \textbf{security/ir.model.access.csv} para agregar lo siguiente:
+{\small
+\begin{tcolorbox}[title=Datos del CSV]
+\begin{verbatim}
+acl_liga_partido_wizard,liga.partido_wizard,model_liga_partido_wizard,,1,1,1,1        
+\end{verbatim}
+\end{tcolorbox}
+}
+
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act15_7.png}
+\end{center}
+
+Con el último ajuste terminado, iremos a nuestro modulo para comprobar su correcta implementación creando un nuevo partido.
+
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act15_8.png}
+\end{center}
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{img/act15_9.png}
+\end{center}
+
+\newpage
+\volverindice
+
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act15_10.png}
+\end{center}
+Como se puede observar, la implementación fue exitoso.
+
+\subsection{Vista Graph}
+Para finalizar con los ejecicios de la \textbf{Actividad 1}, en la última parte se nos pide que creemos una nueva vista tipo \textbf{Gráfica}. Esto lo realizaremos agregando en el archivo \textbf{Liga\_partido.xml} este código:
+
+\begin{tcolorbox}[title=Datos del CSV]
+\begin{verbatim}
+<!-- Vista Graph -->
+<record id="liga_partido_view_graph" model="ir.ui.view">
+    <field name="name">Gráfico goles locales</field>
+    <field name="model">liga.partido</field>
+    <field name="arch" type="xml">
+        <graph string="Goles Equipo Local" type="bar">
+            <!-- Agrupamos por equipo de casa -->
+            <field name="goles_casa" type="measure"/>
+            <field name="equipo_casa" type="row"/>
+        </graph>
+    </field>       
+\end{verbatim}
+\end{tcolorbox}
+
+\begin{center}
+\includegraphics[width=0.6\textwidth]{img/od28.png}
+\end{center}
+
+\newpage
+\volverindice
+Con la vista nueva agregada, consultaremos las vistas de los partidos para comprobar su correcto funcionamiento
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/od30.png}
+\end{center}
+
+Con la comprobación realizada, daremos por finalizada la \textbf{Actividad 1}
+
+\section{Actividad 02}
+En esta actividad se nos pide probar los diferentes endpoints de la \textbf{API} que contiene el modulo \textbf{“EJ08-API-REST\_Socios”}. Esta prueba se realizara empleando las peticiones \textbf{GET, POST, PUT y DELETE}.\\
+Para poder ver el vídeo \href{https://docs.google.com/videos/d/1vNUten_RPX7zC1RZui6T_uvXjJMv3BPSIm19dp00tnQ/edit?usp=sharing}{Ingrese Aquí}
+
+\newpage
+\volverindice
+\section{Actividad 03 – Bot de Telegrama}
+En esta actividad, se nos pide crear un \textbf{Bot de Telegrama} empelando las API de la actividad anteriór.
+\subsection{Configuración de Bot}
+Para comenzar, desde la aplicación de \textbf{Telegrama} de nuestro dispositivo, realizaremos una busqueda del bot \textbf{@BotFather}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/bot1.jpeg}
+\end{center}
+
+\newpage
+\volverindice
+Una vez localizado, entraremos en el chat e iniciamos la conversación.
+
+\begin{center}
+\includegraphics[width=0.6\textwidth]{img/bot2.jpeg}
+\end{center}
+
+\newpage
+\volverindice
+Al iniciar la conversación, no mandará un mensaje de las acciones que podemos realizar.\\
+En nuestro caso, nos interesa la sección de nuevo bot (\textbf{/NewBot}).
+\begin{center}
+\includegraphics[width=0.6\textwidth]{img/bot3.jpeg}
+\end{center}
+
+\newpage
+\volverindice
+Una vez que seleccionamos \textbf{/newbot}, nos pedirá que ingresemos el nombre de este.\\
+Con el nombre seleccionado, el bot nos mandará un mensaje con el enlace al bot que hemos creado asi como un \textbf{Token de Acceso desde un API HTTP}
+
+\begin{center}
+\includegraphics[width=0.6\textwidth]{img/bot4.jpeg}
+\end{center}
+
+\newpage
+\volverindice
+A continuación, entramos al nuevo bot que hemos creado donde nos espera con un botón para iniciarlo.
+
+\begin{center}
+\includegraphics[width=0.6\textwidth]{img/bot5.jpeg}
+\end{center}
+
+\newpage
+\volverindice
+Con el bot creado, nos dirigimos a la capeta de módulos de nuestro Odoo para crear un nuevo proyecto llamado   \textbf{Bot\_Telegram.py}
+
+\begin{center}
+\includegraphics[width=0.4\textwidth]{img/act3_5.png}
+\end{center}
+
+Con el archivo creado, antes de comenzar a programar el bot, instalaremos la dependencias necesarias.
+Para ello, emplearemos los siguientes comando en nuestra terminal.
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act3_2.png}
+\end{center}
+Primero con las dependencias de \textbf{Telegrama bot y Request}
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act3_3.png}
+\end{center}
+Luego con la instalación de la variable de entorno \textbf{Dotenv}
+
+\newpage
+\volverindice
+Una vez finalizadas las instalaciones, nos dirigiremos a nuestro archivo \textbf{.ENV} donde configuraremos una nuevas variables de entorno necesarias para trabajar.
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act3_4.png}
+\end{center}
+
+Como se puede ver, hemos añadido el \textbf{token}, que nos entrego el bot, la \textbf{url a la api}, así como la api a todos nuestros socios.\\
+
+Con todos los pasos previos finalizados, nos dispondremos a programar el funcionamiento de nuestro bot.
+Para ello, comenzamos importando todas las libreras necesarias, asi coma la declaracion de las variable de entorno
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act3_6.png}
+\end{center}
+
+A continuación en la función del bot, creamos unas variables y un bucle for para dividir los comandos de los datos.
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act3_7.png}
+\end{center}
+
+\newpage
+\volverindice
+Después, crearemos las acciones que realizara el bot en base a los comandos que este reciba.
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act3_8.png}
+\end{center}
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act3_9.png}
+\end{center}
+
+\newpage
+\volverindice
+Por último, crearemos dos funciones mas:\\
+Una función \textbf{help\_bot} para ayudar al usuario y otras función \textbf{main} para iniciar el programa.
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act3_10.png}
+\end{center}
+
+Con todo listo, iniciaremos el programa para interactuar con el bot
+\begin{center}
+\includegraphics[width=1\textwidth]{img/bot20.png}
+\end{center}
+
+\newpage
+\volverindice
+Una vez iniciado el programa, nos dirigiremos al \textbf{Chat de Telegram} para comenzar a interactuar con el y comprobar su correcto funcionamiento.\\
+Lo primero que realizaremos en comprobar el correcto funcionamiento de comando \textbf{/help}
+\begin{center}
+\includegraphics[width=0.6\textwidth]{img/bot6.jpeg}
+\end{center}
+
+\newpage
+\volverindice
+Lo segundo es comprobar la creación de socios asi como la modificación
+\begin{center}
+\includegraphics[width=0.6\textwidth]{img/bot7.jpeg}
+\end{center}
+
+\newpage
+\volverindice
+Con los socios creado y modificados, comprobaremos los socios con una consulta, seguida de una prueba de elimianción de uno de los socios.
+\begin{center}
+\includegraphics[width=0.6\textwidth]{img/bot8.jpeg}
+\end{center}
+
+\newpage
+\volverindice
+Con el mensaje de confirmación, realizaremos una consulta final para comprobar y finalizar con el proyecto.
+\begin{center}
+\includegraphics[width=0.6\textwidth]{img/bot9.jpeg}
+\end{center}
+
+\newpage
+\volverindice
+\section{Actividad 04 – Generación de imágenes aleatorias}
+Para realizar esta actividad en la que deberemos de crear un programa que cree una imagen aleatoria en base a los datos de alto y ancho que le ingresamos desde el url, primero, deberemos de tener instalado el módulo \textbf{“EJ09-GenerarBarcode”}.\\
+Con en modulo instalado, tendremos que realizar un paso previo antes de ponernos a trabajar. \\ 
+Este consiste en instala las librerías que se necesitara para trabajar. Para ello, desde nuestra terminal ingresaremos los siguientes comandos en orden:
+Lo primero entraremos al contenedor de nuestro Odoo emplenado lo siguinte:
+\begin{tcolorbox}[title=Comando Acceso Contenerdo]
+\begin{verbatim}
+docker exec -u root -it <id de nustro contenedor>
+\end{verbatim}
+\end{tcolorbox}
+
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act4_3.png}
+\end{center}
+
+Una vez dentro, ingresaremos el comando para instalar \textbf{Barcode} y \textbf{Pillow}
+\begin{tcolorbox}[title=Comando de Instalación Barcode]
+\begin{verbatim}
+python3 -m pip install -break-system-packages python-barcode
+\end{verbatim}
+\end{tcolorbox}
+
+\begin{center}
+\includegraphics[width=1\textwidth]{img/act4_8.png}
+\end{center}
+
+Con el barcode instalado, utilizaremos el siguinte colando para instla \textbf{Pillow} en caso de que no se encuentre:
+\begin{tcolorbox}[title=Comando de Instalación Pillow]
+\begin{verbatim}
+python3 -m pip install -break-system-packages python-barcode  pillow
+\end{verbatim}
+\end{tcolorbox}
+
+Tras finaliza, usando el comando \textbf{PIP List} comprobaremos la correcta instalación
+\begin{center}
+\includegraphics[width=0.5\textwidth]{img/pip.png}
+\end{center}
+
+\newpage
+\volverindice
+Con esto, finalizamos con los pasos previos y nos dispondremos a comenzar a codificar el programa.\\
+Para comenzar, nos dirigimos a la carpeta \textbf{controllers} de modulo para crear un archivo llamado \textbf{imagen\_aleatoria.py}\\
+Tras crear el archivo donde se va a trabajar, ingresaremos el siguiente código encargado de generar la imagen de forma aleatoria en base a los parámetros que se le indica
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/act4_10.png}
+\end{center}
+
+\newpage
+\volverindice
+Por último, antes de realizar una prueba, nos dirigiremos al archivo \textbf{\_\_init\_\_.py} donde importaremos nuestro generador.
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/act4_11.png}
+\end{center}
+
+Tras esto, nos dirigiremos a este \href{http://localhost:9001/generador/imagenaleatoria?ancho=300&alto=200}{Enlace}
+Donde nos generara la siguinte imagen
+\begin{center}
+\includegraphics[width=0.9\textwidth]{img/act4_12.png}
+\end{center}
+
+Con esta ultima actividad damos por finalizado esta documentación
+
+\end{document}
